@@ -7,9 +7,8 @@ import '../utils/format.dart';
 import '../widgets/async_value_widget.dart';
 import '../widgets/rating_stars.dart';
 
-/// Écran de détail d'un produit.
-/// Reçoit un [productId] et charge les données via
-/// [productByIdProvider] (FutureProvider.family) → AsyncValue.
+// Détail d'un produit. On lui passe l'id et il charge le produit
+// avec productByIdProvider (FutureProvider.family).
 class ProductDetailScreen extends ConsumerWidget {
   final String productId;
   const ProductDetailScreen({super.key, required this.productId});

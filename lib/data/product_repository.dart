@@ -2,23 +2,16 @@ import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/product.dart';
 
-/// Couche d'accès aux données (data layer).
-///
-/// Simule une API distante : les produits sont mockés dans un fichier
-/// JSON local (`assets/products.json`), chargés de façon asynchrone
-/// avec un délai artificiel pour rendre visibles les états de
-/// chargement / erreur dans l'UI (via AsyncValue).
-///
-/// Les widgets ne connaissent jamais cette classe directement : ils
-/// passent par les providers Riverpod (séparation logique / UI).
+// Va chercher les données des produits.
+// Ici c'est une fausse API : on lit un fichier JSON local avec un
+// petit délai pour simuler le réseau (et voir le chargement).
+// Plus tard on pourrait remplacer par un vrai appel HTTP ici sans
+// rien changer aux écrans.
 class ProductRepository {
   const ProductRepository();
 
-  /// Récupère le catalogue. Peut être remplacé par un vrai appel HTTP
-  /// sans toucher ni aux providers ni à l'UI.
   Future<List<Product>> fetchProducts() async {
-    // Simule la latence réseau.
-    await Future.delayed(const Duration(milliseconds: 700));
+    await Future.delayed(const Duration(milliseconds: 700)); // faux délai réseau
 
     final raw = await rootBundle.loadString('assets/products.json');
     final list = jsonDecode(raw) as List<dynamic>;
@@ -27,7 +20,7 @@ class ProductRepository {
         .toList();
   }
 
-  /// Récupère un produit par son identifiant (fausse API).
+  // Cherche un produit par son id
   Future<Product> fetchProductById(String id) async {
     final products = await fetchProducts();
     return products.firstWhere(

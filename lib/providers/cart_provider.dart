@@ -2,19 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/cart_item.dart';
 import '../models/product.dart';
 
-/// Logique métier du panier, isolée des widgets (StateNotifier).
-///
-/// L'état est une liste immuable de [CartItem] : chaque opération
-/// produit une NOUVELLE liste plutôt que de muter l'existante.
-class CartNotifier extends StateNotifier<List<CartItem>> {
-  CartNotifier() : super(const []);
+// Le panier. J'utilise Notifier (Riverpod 2.x) vu dans le cours.
+// L'état est une liste de CartItem qu'on remplace à chaque changement.
+class CartNotifier extends Notifier<List<CartItem>> {
+  @override
+  List<CartItem> build() => [];
 
-  /// Ajoute un produit ; s'il est déjà présent, incrémente la quantité.
   void add(Product product) {
     final index = state.indexWhere((item) => item.product.id == product.id);
     if (index == -1) {
+      // pas encore dans le panier
       state = [...state, CartItem(product: product, quantity: 1)];
     } else {
+      // déjà présent -> on ajoute 1 à la quantité
       state = [
         for (final item in state)
           if (item.product.id == product.id)
@@ -25,23 +25,6 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     }
   }
 
-  /// Retire complètement une ligne du panier.
-  void remove(String productId) {
-    state = state.where((item) => item.product.id != productId).toList();
-  }
-
-  /// Diminue la quantité d'une unité ; retire la ligne si elle tombe à 0.
-  void decrement(String productId) {
-    state = [
-      for (final item in state)
-        if (item.product.id == productId)
-          item.copyWith(quantity: item.quantity - 1)
-        else
-          item,
-    ].where((item) => item.quantity > 0).toList();
-  }
-
-  /// Augmente la quantité d'une unité.
   void increment(String productId) {
     state = [
       for (final item in state)
@@ -52,25 +35,36 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     ];
   }
 
-  void clear() => state = const [];
+  void decrement(String productId) {
+    // enlève 1, et si la quantité tombe à 0 on retire la ligne
+    state = [
+      for (final item in state)
+        if (item.product.id == productId)
+          item.copyWith(quantity: item.quantity - 1)
+        else
+          item,
+    ].where((item) => item.quantity > 0).toList();
+  }
+
+  void remove(String productId) {
+    state = state.where((item) => item.product.id != productId).toList();
+  }
+
+  void clear() => state = [];
 }
 
-/// (7) StateNotifierProvider — le panier.
-final cartProvider =
-    StateNotifierProvider<CartNotifier, List<CartItem>>((ref) {
-  return CartNotifier();
-});
+final cartProvider = NotifierProvider<CartNotifier, List<CartItem>>(
+  CartNotifier.new,
+);
 
-/// Provider dérivé — nombre total d'articles (somme des quantités).
+// Nombre d'articles (pour le badge du panier)
 final cartCountProvider = Provider<int>((ref) {
-  return ref
-      .watch(cartProvider)
-      .fold<int>(0, (sum, item) => sum + item.quantity);
+  final items = ref.watch(cartProvider);
+  return items.fold<int>(0, (sum, item) => sum + item.quantity);
 });
 
-/// Provider dérivé — montant total du panier.
+// Prix total du panier
 final cartTotalProvider = Provider<int>((ref) {
-  return ref
-      .watch(cartProvider)
-      .fold<int>(0, (sum, item) => sum + item.lineTotal);
+  final items = ref.watch(cartProvider);
+  return items.fold<int>(0, (sum, item) => sum + item.lineTotal);
 });

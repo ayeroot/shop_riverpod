@@ -7,10 +7,8 @@ import '../widgets/cart_badge.dart';
 import 'product_detail_screen.dart';
 import 'cart_screen.dart';
 
-/// Écran catalogue : recherche + filtrage par catégorie + tri.
-/// Lit le provider dérivé [filteredProductsProvider] (AsyncValue) et
-/// délègue la gestion loading/erreur au widget réutilisable
-/// [AsyncValueWidget].
+// Écran catalogue : recherche + filtre + tri.
+// Il lit filteredProductsProvider (la liste déjà filtrée/triée).
 class CatalogScreen extends ConsumerWidget {
   const CatalogScreen({super.key});
 

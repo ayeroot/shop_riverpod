@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/product_repository.dart';
 import '../models/product.dart';
 
-/// Options de tri disponibles sur le catalogue.
+// Les façons de trier le catalogue
 enum SortOption {
   nameAsc('Nom (A→Z)'),
   priceAsc('Prix croissant'),
@@ -13,51 +13,44 @@ enum SortOption {
   final String label;
 }
 
-/// (1) Provider — expose le repository (couche données).
-/// Injecté ici pour pouvoir être remplacé facilement dans les tests
-/// (override) par un faux repository.
+// Le repository (source des données). Mis dans un provider pour pouvoir
+// le remplacer par un faux dans les tests.
 final productRepositoryProvider = Provider<ProductRepository>((ref) {
   return const ProductRepository();
 });
 
-/// (2) FutureProvider — charge le catalogue de façon asynchrone.
-/// Expose un AsyncValue<List<Product>> (loading / data / error) que
-/// l'UI consomme directement.
+// Charge la liste des produits (asynchrone) -> AsyncValue
 final catalogProvider = FutureProvider<List<Product>>((ref) async {
   final repo = ref.watch(productRepositoryProvider);
   return repo.fetchProducts();
 });
 
-/// (3) FutureProvider.family — charge un produit précis pour l'écran
-/// de détail (paramètre = id du produit).
+// Charge un seul produit par son id, pour l'écran de détail (family)
 final productByIdProvider =
     FutureProvider.family<Product, String>((ref, id) async {
   final repo = ref.watch(productRepositoryProvider);
   return repo.fetchProductById(id);
 });
 
-/// (4) StateProvider — texte de recherche.
+// Le texte tapé dans la recherche
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-/// (5) StateProvider — catégorie sélectionnée ('Toutes' = pas de filtre).
+// La catégorie choisie ('Toutes' = on ne filtre pas)
 final categoryFilterProvider = StateProvider<String>((ref) => 'Toutes');
 
-/// (6) StateProvider — option de tri courante.
-final sortOptionProvider = StateProvider<SortOption>((ref) => SortOption.nameAsc);
+// Le tri choisi
+final sortOptionProvider =
+    StateProvider<SortOption>((ref) => SortOption.nameAsc);
 
-/// Provider dérivé — liste des catégories disponibles, calculée à partir
-/// du catalogue chargé.
+// La liste des catégories, construite à partir des produits chargés
 final categoriesProvider = Provider<List<String>>((ref) {
-  final products = ref.watch(catalogProvider).valueOrNull ?? const <Product>[];
-  final set = products.map((p) => p.category).toSet().toList()..sort();
-  return ['Toutes', ...set];
+  final products = ref.watch(catalogProvider).valueOrNull ?? [];
+  final cats = products.map((p) => p.category).toSet().toList()..sort();
+  return ['Toutes', ...cats];
 });
 
-/// Provider dérivé — catalogue filtré + trié.
-///
-/// Combine le catalogue (async) avec les filtres/tri (synchrones) et
-/// renvoie un AsyncValue : l'UI garde ainsi la gestion du chargement et
-/// des erreurs même après filtrage.
+// Le catalogue après recherche + filtre + tri.
+// On garde un AsyncValue pour continuer à gérer le chargement/erreur.
 final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
   final catalog = ref.watch(catalogProvider);
   final query = ref.watch(searchQueryProvider).trim().toLowerCase();
@@ -65,12 +58,14 @@ final filteredProductsProvider = Provider<AsyncValue<List<Product>>>((ref) {
   final sort = ref.watch(sortOptionProvider);
 
   return catalog.whenData((products) {
+    // 1) on filtre
     final list = products.where((p) {
-      final matchesQuery = query.isEmpty || p.name.toLowerCase().contains(query);
-      final matchesCategory = category == 'Toutes' || p.category == category;
-      return matchesQuery && matchesCategory;
+      final okQuery = query.isEmpty || p.name.toLowerCase().contains(query);
+      final okCategory = category == 'Toutes' || p.category == category;
+      return okQuery && okCategory;
     }).toList();
 
+    // 2) on trie
     switch (sort) {
       case SortOption.nameAsc:
         list.sort((a, b) => a.name.compareTo(b.name));

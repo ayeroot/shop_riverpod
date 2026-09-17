@@ -6,12 +6,10 @@ import 'favorites_screen.dart';
 import 'cart_screen.dart';
 import 'profile_screen.dart';
 
-/// Conteneur principal avec navigation adaptative :
-/// - < 720 px (mobile) : NavigationBar en bas ;
-/// - ≥ 720 px (tablette / desktop) : NavigationRail latéral.
-///
-/// Les 4 sections sont conservées dans un IndexedStack pour préserver
-/// leur état (recherche, filtres...) entre les changements d'onglet.
+// Écran principal avec la navigation.
+// Sur petit écran -> barre en bas (NavigationBar).
+// Sur grand écran (>= 720px) -> barre à gauche (NavigationRail).
+// J'utilise un IndexedStack pour garder l'état des onglets.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 

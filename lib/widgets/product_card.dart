@@ -6,11 +6,8 @@ import '../providers/favorites_provider.dart';
 import '../utils/format.dart';
 import 'rating_stars.dart';
 
-/// Widget réutilisable : carte d'un produit (catalogue et favoris).
-///
-/// ConsumerWidget : lit l'état "favori" et déclenche les actions
-/// panier / favoris via les notifiers — aucune donnée en dur, tout
-/// vient du [product] et des providers.
+// Carte d'un produit, utilisée dans le catalogue et les favoris.
+// ConsumerWidget car elle lit l'état favori et ajoute au panier.
 class ProductCard extends ConsumerWidget {
   final Product product;
   final VoidCallback onTap;

@@ -6,8 +6,8 @@ import '../widgets/async_value_widget.dart';
 import '../widgets/product_card.dart';
 import 'product_detail_screen.dart';
 
-/// Écran favoris : croise les identifiants favoris ([favoritesProvider])
-/// avec le catalogue chargé pour n'afficher que les produits aimés.
+// Écran favoris : on garde seulement les produits dont l'id est
+// dans la liste des favoris.
 class FavoritesScreen extends ConsumerWidget {
   const FavoritesScreen({super.key});
 

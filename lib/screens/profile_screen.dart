@@ -5,9 +5,8 @@ import '../providers/cart_provider.dart';
 import '../providers/favorites_provider.dart';
 import '../widgets/async_value_widget.dart';
 
-/// Écran profil (mock) : charge un utilisateur de façon asynchrone
-/// ([profileProvider] → AsyncValue) et permet de changer le thème
-/// ([themeModeProvider]).
+// Écran profil : charge un utilisateur (mock) en async et permet
+// de changer le thème.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 

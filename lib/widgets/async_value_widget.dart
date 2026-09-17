@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Widget réutilisable qui gère les 3 états d'un [AsyncValue] :
-/// chargement (spinner), erreur (message + bouton "Réessayer") et
-/// données (via le builder [data]).
-///
-/// Centralise la gestion loading/erreur pour éviter de la répéter dans
-/// chaque écran.
+// Petit widget qui gère les 3 cas d'un AsyncValue :
+// chargement -> spinner, erreur -> message + bouton Réessayer,
+// données -> on affiche l'écran. Comme ça je ne recopie pas ce
+// code dans chaque écran.
 class AsyncValueWidget<T> extends StatelessWidget {
   final AsyncValue<T> value;
   final Widget Function(T data) data;

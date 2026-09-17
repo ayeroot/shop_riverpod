@@ -1,149 +1,103 @@
-# 🛒 Shop Riverpod — App e-commerce Flutter
+# Shop Riverpod
 
-Application e-commerce Flutter démontrant la maîtrise du **state
-management avec Riverpod** : catalogue de produits (liste + détail),
-panier, favoris persistés, filtrage/tri, et profil utilisateur (mock).
-Les données produits sont **mockées** (fichier JSON local) et chargées
-de façon **asynchrone** ; les états de chargement et d'erreur sont
-gérés dans l'UI via **`AsyncValue`**.
+Petite application e-commerce faite avec Flutter et **Riverpod** pour
+apprendre le state management. On peut parcourir un catalogue de
+produits, ouvrir le détail d'un produit, gérer un panier, mettre des
+produits en favoris (sauvegardés sur le téléphone), filtrer/trier, et
+voir un écran de profil.
 
----
+Les produits sont des données de test (fichier JSON local) chargées de
+façon asynchrone, et j'utilise `AsyncValue` pour afficher le chargement
+et les erreurs.
 
-## ✨ Fonctionnalités
+## Fonctionnalités
 
-- **Catalogue** : liste responsive (grille 2→4 colonnes), recherche,
-  filtrage par catégorie et tri (nom, prix ↑/↓, note).
-- **Détail produit** : chargé via un `FutureProvider.family`.
-- **Panier** : ajout, suppression, gestion des quantités (+/−), total
-  calculé, vidage, badge de comptage.
-- **Favoris** : ajout/retrait, **persistés localement**
-  (`shared_preferences`), survivent au redémarrage.
-- **Profil utilisateur (mock)** : chargé de façon asynchrone, + choix
-  du thème clair/sombre/système.
-- **États UI** : chargement (spinner), erreur (message + « Réessayer »)
-  et données, centralisés dans un widget réutilisable `AsyncValueWidget`.
-- **Bonus** : animation « rebond » du badge panier à chaque ajout
-  (`CartBadge`), retour visuel via SnackBar.
-- Navigation adaptative (NavigationBar mobile / NavigationRail desktop).
+- Catalogue : liste des produits + recherche + filtre par catégorie + tri
+- Détail d'un produit
+- Panier : ajouter, changer la quantité (+/−), supprimer, total
+- Favoris sauvegardés localement (`shared_preferences`)
+- Écran de profil (données mock) + choix du thème clair/sombre
+- Gestion du chargement et des erreurs (spinner / message + « Réessayer »)
+- Bonus : petite animation du badge du panier quand on ajoute un produit
 
-## 🏗️ Architecture en couches
+## Organisation du projet
 
-La logique métier est **séparée des widgets** : les écrans ne font que
-lire des providers et déclencher des actions ; ils ne connaissent ni le
-`shared_preferences`, ni le chargement JSON.
-
-```
-┌─────────────────────────────────────────────┐
-│  PRÉSENTATION  (lib/screens, lib/widgets)     │  ← UI, ConsumerWidget
-├─────────────────────────────────────────────┤
-│  ÉTAT / LOGIQUE  (lib/providers)              │  ← Riverpod (Notifiers)
-├─────────────────────────────────────────────┤
-│  DONNÉES  (lib/data/product_repository.dart)  │  ← fausse API (JSON)
-├─────────────────────────────────────────────┤
-│  DOMAINE  (lib/models)                         │  ← modèles immuables
-└─────────────────────────────────────────────┘
-```
+J'ai essayé de séparer le code : les données d'un côté, les providers
+(la logique) au milieu, et les écrans/widgets qui affichent. Les écrans
+ne touchent jamais directement au JSON ou à shared_preferences, ils
+passent par les providers.
 
 ```
 lib/
-├── main.dart                       # ProviderScope + MaterialApp
-├── theme.dart                      # thèmes clair/sombre (Material 3)
-├── models/
-│   ├── product.dart                # modèle Product (immuable, fromJson)
-│   ├── cart_item.dart              # ligne de panier (product + quantité)
-│   └── user_profile.dart           # profil mock
-├── data/
-│   └── product_repository.dart     # fausse API : charge assets/products.json
-├── providers/
-│   ├── product_providers.dart      # repo, catalogue, filtres, tri, dérivés
-│   ├── cart_provider.dart          # panier (StateNotifier) + dérivés
-│   ├── favorites_provider.dart     # favoris persistés (StateNotifier)
-│   └── profile_provider.dart       # profil (FutureProvider) + thème
-├── screens/
-│   ├── home_shell.dart             # navigation adaptative (4 onglets)
-│   ├── catalog_screen.dart         # liste + recherche + filtre + tri
-│   ├── product_detail_screen.dart  # détail (FutureProvider.family)
-│   ├── cart_screen.dart            # panier
-│   ├── favorites_screen.dart       # favoris
-│   └── profile_screen.dart         # profil + thème
-├── widgets/
-│   ├── async_value_widget.dart     # gestion loading/erreur réutilisable
-│   ├── product_card.dart           # carte produit
-│   ├── cart_badge.dart             # badge panier animé (bonus)
-│   ├── quantity_selector.dart      # sélecteur de quantité
-│   └── rating_stars.dart           # note en étoiles
-└── utils/
-    └── format.dart                 # formatage des prix (FCFA)
+├── main.dart            # ProviderScope + MaterialApp
+├── theme.dart           # thème clair / sombre
+├── models/              # les classes de données (Product, CartItem, UserProfile)
+├── data/                # product_repository.dart : lit assets/products.json
+├── providers/           # tous les providers Riverpod
+├── screens/             # les écrans (catalogue, détail, panier, favoris, profil)
+├── widgets/             # widgets réutilisés (carte produit, étoiles, etc.)
+└── utils/               # format.dart : afficher les prix en FCFA
 assets/
-└── products.json                   # 12 produits mockés
+└── products.json        # 12 produits de test
 ```
 
-## 🧩 Providers utilisés
+## Les providers
 
-10 providers distincts, de types variés :
+| Provider | Type | À quoi il sert |
+|---|---|---|
+| `productRepositoryProvider` | `Provider` | Donne accès au repository (pratique pour les tests) |
+| `catalogProvider` | `FutureProvider` | Charge les produits → `AsyncValue` |
+| `productByIdProvider` | `FutureProvider.family` | Charge un produit par son id (écran détail) |
+| `searchQueryProvider` | `StateProvider` | Le texte de recherche |
+| `categoryFilterProvider` | `StateProvider` | La catégorie choisie |
+| `sortOptionProvider` | `StateProvider` | Le tri choisi |
+| `cartProvider` | `NotifierProvider` | Le panier (ajout/quantité/suppression) |
+| `favoritesProvider` | `NotifierProvider` | Les favoris (sauvegardés) |
+| `profileProvider` | `FutureProvider` | Le profil utilisateur (mock) |
+| `themeModeProvider` | `StateProvider` | Le thème clair/sombre |
 
-| # | Provider | Type Riverpod | Rôle |
-|---|----------|---------------|------|
-| 1 | `productRepositoryProvider` | `Provider` | Expose le repository (injectable/overridable en test) |
-| 2 | `catalogProvider` | `FutureProvider` | Charge le catalogue → `AsyncValue<List<Product>>` |
-| 3 | `productByIdProvider` | `FutureProvider.family` | Charge un produit par id (écran détail) |
-| 4 | `searchQueryProvider` | `StateProvider` | Texte de recherche |
-| 5 | `categoryFilterProvider` | `StateProvider` | Catégorie sélectionnée |
-| 6 | `sortOptionProvider` | `StateProvider` | Option de tri |
-| 7 | `cartProvider` | `StateNotifierProvider` | Panier (ajout/suppr./quantité) |
-| 8 | `favoritesProvider` | `StateNotifierProvider` | Favoris persistés (shared_preferences) |
-| 9 | `profileProvider` | `FutureProvider` | Profil utilisateur mock (async) |
-| 10 | `themeModeProvider` | `StateProvider` | Thème clair/sombre/système |
+Il y a aussi quelques providers calculés à partir des autres :
+`filteredProductsProvider` (catalogue une fois filtré et trié),
+`categoriesProvider`, `cartCountProvider`, `cartTotalProvider` et
+`isFavoriteProvider`.
 
-Providers **dérivés** (calculés à partir d'autres, sans état propre) :
-`filteredProductsProvider` (catalogue filtré + trié, renvoie un
-`AsyncValue`), `categoriesProvider`, `cartCountProvider`,
-`cartTotalProvider`, `isFavoriteProvider` (family).
+Pour le panier et les favoris j'ai utilisé `Notifier` / `NotifierProvider`
+(Riverpod 2.x, comme dans le cours) parce qu'il y a de la logique
+(ajouter, incrémenter, sauvegarder). Pour les choses plus simples
+(recherche, tri, thème) un `StateProvider` suffit.
 
-### Gestion asynchrone (`AsyncValue`)
+### AsyncValue
 
-Le catalogue, le détail et le profil sont exposés en `AsyncValue`. Le
-widget réutilisable `AsyncValueWidget<T>` traite les trois cas via
-`.when(data / loading / error)` et propose un bouton « Réessayer »
-(`ref.invalidate(...)`), évitant de dupliquer cette logique.
+Le catalogue, le détail et le profil renvoient un `AsyncValue`. Pour ne
+pas répéter le même code partout, j'ai fait un petit widget
+`AsyncValueWidget` qui gère les 3 cas (`loading` → spinner, `error` →
+message + bouton « Réessayer », `data` → l'écran).
 
-## 🚀 Installation et lancement
+## Lancer le projet
 
 ```bash
-git clone https://github.com/ayeroot/recipes_app.git   # ← remplacez par l'URL de ce dépôt
-cd <dossier-du-projet>
-
 flutter pub get
-flutter run                 # appareil / émulateur
-flutter run -d chrome       # Web
+flutter run            # sur un téléphone / émulateur
+flutter run -d chrome  # dans le navigateur
 ```
 
-### Tests
+Lancer les tests :
 
 ```bash
-flutter test        # 5 tests : logique panier, filtrage, UI (loading→data, recherche)
+flutter test
 ```
 
-### Analyse statique
+## Captures d'écran
 
-```bash
-flutter analyze     # 0 problème
-```
-
-## 📱 Captures d'écran
-
-| Catalogue (mobile) | Détail | Panier |
+| Catalogue | Détail | Panier |
 |---|---|---|
 | ![Catalogue](screenshots/catalog_mobile.png) | ![Détail](screenshots/detail.png) | ![Panier](screenshots/cart.png) |
 
-| Favoris | Profil | Catalogue (desktop / NavigationRail) |
+| Favoris | Profil | Version large (tablette/desktop) |
 |---|---|---|
 | ![Favoris](screenshots/favorites.png) | ![Profil](screenshots/profile.png) | ![Desktop](screenshots/catalog_desktop.png) |
 
-## 🛠️ Technologies
+## Packages utilisés
 
-- **Flutter** (Material 3)
-- **flutter_riverpod** (2.x) — `Provider`, `FutureProvider`,
-  `FutureProvider.family`, `StateProvider`, `StateNotifierProvider`
-- **shared_preferences** — persistance des favoris
-- **flutter_test** — tests unitaires (ProviderContainer) et de widgets
+- `flutter_riverpod` — le state management
+- `shared_preferences` — pour sauvegarder les favoris

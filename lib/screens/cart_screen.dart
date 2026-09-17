@@ -4,8 +4,7 @@ import '../providers/cart_provider.dart';
 import '../utils/format.dart';
 import '../widgets/quantity_selector.dart';
 
-/// Écran panier : lignes du panier avec gestion des quantités, total
-/// et vidage. Lit [cartProvider] et [cartTotalProvider].
+// Écran panier : les lignes, les quantités, le total et le bouton vider.
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
 
